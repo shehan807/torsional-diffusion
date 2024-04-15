@@ -96,58 +96,62 @@ else:
 
 def sample_confs(raw_smi, n_confs, smi):
     print(raw_smi)
-    if args.seed_confs:
-        mol, data = get_seed(raw_smi, seed_confs=seed_confs, dataset=args.dataset)
-    elif args.seed_mols:
-        mol, data = get_seed(smi, seed_confs=seed_confs, dataset=args.dataset)
-        mol.RemoveAllConformers()
-    else:
-        mol, data = get_seed(smi, dataset=args.dataset)
-    if not mol:
-        print('Failed to get seed', smi)
-        return None
-
-    n_rotable_bonds = int(data.edge_mask.sum())
-    if args.seed_confs:
-        conformers, pdb = embed_seeds(mol, data, n_confs, single_conf=args.single_conf, smi=raw_smi,
-                                      pdb=args.dump_pymol, seed_confs=seed_confs)
-    else:
-        conformers, pdb = embed_seeds(mol, data, n_confs, single_conf=args.single_conf,
-                                      pdb=args.dump_pymol, embed_func=embed_func, mmff=args.pre_mmff)
-    if not conformers:
-        print("Failed to embed", smi)
-        return None
-
-    if not args.no_random and n_rotable_bonds > 0.5:
-        conformers = perturb_seeds(conformers, pdb)
-
-    if not args.no_model and n_rotable_bonds > 0.5:
-        conformers = sample(conformers, model, args.sigma_max, args.sigma_min, args.inference_steps,
-                            args.batch_size, args.ode, args.likelihood, pdb,
-                            pg_weight_log_0=args.pg_weight_log_0, pg_weight_log_1=args.pg_weight_log_1,
-                            pg_repulsive_weight_log_0=args.pg_repulsive_weight_log_0,
-                            pg_repulsive_weight_log_1=args.pg_repulsive_weight_log_1,
-                            pg_kernel_size_log_0=args.pg_kernel_size_log_0,
-                            pg_kernel_size_log_1=args.pg_kernel_size_log_1,
-                            pg_langevin_weight_log_0=args.pg_langevin_weight_log_0,
-                            pg_langevin_weight_log_1=args.pg_langevin_weight_log_1,
-                            pg_invariant=args.pg_invariant, mol=mol)
-
-    if args.dump_pymol:
-        if not osp.isdir(args.dump_pymol):
-            os.mkdir(args.dump_pymol)
-        pdb.write(f'{args.dump_pymol}/{smi_idx}.pdb', limit_parts=5)
-
-    mols = [pyg_to_mol(mol, conf, args.post_mmff, rmsd=not args.no_energy) for conf in conformers]
-    if args.likelihood:
-        if n_rotable_bonds < 0.5:
-            print(f"Skipping mol {smi} with 0 rotable bonds")
+    try:
+        if args.seed_confs:
+            mol, data = get_seed(raw_smi, seed_confs=seed_confs, dataset=args.dataset)
+        elif args.seed_mols:
+            mol, data = get_seed(smi, seed_confs=seed_confs, dataset=args.dataset)
+            mol.RemoveAllConformers()
+        else:
+            mol, data = get_seed(smi, dataset=args.dataset)
+        if not mol:
+            print('Failed to get seed', smi)
             return None
-    for mol, data in zip(mols, conformers):
-        populate_likelihood(mol, data, water=args.water, xtb=args.xtb)
 
-    if args.xtb:
-        mols = [mol for mol in mols if mol.xtb_energy]
+        n_rotable_bonds = int(data.edge_mask.sum())
+        if args.seed_confs:
+            conformers, pdb = embed_seeds(mol, data, n_confs, single_conf=args.single_conf, smi=raw_smi,
+                                          pdb=args.dump_pymol, seed_confs=seed_confs)
+        else:
+            conformers, pdb = embed_seeds(mol, data, n_confs, single_conf=args.single_conf,
+                                          pdb=args.dump_pymol, embed_func=embed_func, mmff=args.pre_mmff)
+        if not conformers:
+            print("Failed to embed", smi)
+            return None
+
+        if not args.no_random and n_rotable_bonds > 0.5:
+            conformers = perturb_seeds(conformers, pdb)
+
+        if not args.no_model and n_rotable_bonds > 0.5:
+            conformers = sample(conformers, model, args.sigma_max, args.sigma_min, args.inference_steps,
+                                args.batch_size, args.ode, args.likelihood, pdb,
+                                pg_weight_log_0=args.pg_weight_log_0, pg_weight_log_1=args.pg_weight_log_1,
+                                pg_repulsive_weight_log_0=args.pg_repulsive_weight_log_0,
+                                pg_repulsive_weight_log_1=args.pg_repulsive_weight_log_1,
+                                pg_kernel_size_log_0=args.pg_kernel_size_log_0,
+                                pg_kernel_size_log_1=args.pg_kernel_size_log_1,
+                                pg_langevin_weight_log_0=args.pg_langevin_weight_log_0,
+                                pg_langevin_weight_log_1=args.pg_langevin_weight_log_1,
+                                pg_invariant=args.pg_invariant, mol=mol)
+
+        if args.dump_pymol:
+            if not osp.isdir(args.dump_pymol):
+                os.mkdir(args.dump_pymol)
+            pdb.write(f'{args.dump_pymol}/{smi_idx}.pdb', limit_parts=5)
+
+        mols = [pyg_to_mol(mol, conf, args.post_mmff, rmsd=not args.no_energy) for conf in conformers]
+        if args.likelihood:
+            if n_rotable_bonds < 0.5:
+                print(f"Skipping mol {smi} with 0 rotable bonds")
+                return None
+        for mol, data in zip(mols, conformers):
+            populate_likelihood(mol, data, water=args.water, xtb=args.xtb)
+            if mol is None:
+                return None
+        if args.xtb:
+            mols = [mol for mol in mols if mol.xtb_energy]
+    except Exception:
+        return None
     return mols
 
 
@@ -157,6 +161,7 @@ for smi_idx, (raw_smi, n_confs, smi) in test_data:
     else:
         mols = sample_confs(raw_smi, 2 * n_confs, smi)
     if not mols: continue
+    if mols is None: continue
     if not args.no_energy:
         rmsd = [mol.rmsd for mol in mols]
         dlogp = np.array([mol.euclidean_dlogp for mol in mols])

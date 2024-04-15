@@ -10,3 +10,10 @@ test_run
 *.zip
 *.npy
 workdir
+casf_final.pkl
+casf_lig.csv
+casf_out.pkl
+conformers_20steps.pkl
+generate.sbatch
+pdbbind_lig.csv
+pdbbind_out.pkl
