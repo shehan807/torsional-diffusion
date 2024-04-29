@@ -92,6 +92,9 @@ def log_det_jac(data):
         dx = dx - np.cross(omega, pos)
         jac.append(dx.flatten())
     jac = np.array(jac)
+    if len(jac) == 0:
+        print("ERROR in log_det_jac")
+        return -1
     _, D, _ = np.linalg.svd(jac)
     return np.sum(np.log(D))
 
@@ -114,15 +117,18 @@ def populate_likelihood(mol, data, water=False, xtb=None):
         mol.dlogp = data.dlogp
     except:
         mol.dlogp = 0
-    mol.inertia_tensor = inertia_tensor(data.pos)
-    mol.log_det_jac = log_det_jac(data)
-    mol.euclidean_dlogp = mol.dlogp - 0.5 * np.log(np.abs(np.linalg.det(mol.inertia_tensor))) - mol.log_det_jac
-    mol.mmff_energy = mmff_energy(mol)
-    if not xtb: return
-    res = xtb_energy(mol, dipole=True, path_xtb=xtb)
-    if res:
-        mol.xtb_energy, mol.xtb_dipole, mol.xtb_gap, mol.xtb_runtime = res['energy'], res['dipole'], res['gap'], res['runtime']
-    else:
-        mol.xtb_energy = None
-    if water:
-        mol.xtb_energy_water = xtb_energy(mol, water=True, path_xtb=xtb)['energy']
+    try: 
+        mol.inertia_tensor = inertia_tensor(data.pos)
+        mol.log_det_jac = log_det_jac(data)
+        mol.euclidean_dlogp = mol.dlogp - 0.5 * np.log(np.abs(np.linalg.det(mol.inertia_tensor))) - mol.log_det_jac
+        mol.mmff_energy = mmff_energy(mol)
+        if not xtb: return
+        res = xtb_energy(mol, dipole=True, path_xtb=xtb)
+        if res:
+            mol.xtb_energy, mol.xtb_dipole, mol.xtb_gap, mol.xtb_runtime = res['energy'], res['dipole'], res['gap'], res['runtime']
+        else:
+            mol.xtb_energy = None
+        if water:
+            mol.xtb_energy_water = xtb_energy(mol, water=True, path_xtb=xtb)['energy']
+    except:
+        mol = None
