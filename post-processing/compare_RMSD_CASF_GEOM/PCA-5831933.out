@@ -1,0 +1,31 @@
+---------------------------------------
+Begin Slurm Prolog: Apr-29-2024 15:46:12
+Job ID:    5831933
+User ID:   sparmar32
+Account:   gts-jmcdaniel43-chemx
+Job name:  PCA
+Partition: cpu-medium
+QOS:       inferno
+---------------------------------------
+atl1-1-02-020-27-1.pace.gatech.edu
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda deactivate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+/storage/coda1/p-jmcdaniel43/0/sparmar32/MLC/torsional-diffusion/results/compare_RMSD_CASF_GEOM/analyze_dist.py:114: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  df = pd.concat([df, new_row], ignore_index=True)

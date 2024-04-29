@@ -1,5 +1,12 @@
 # Torsional Diffusion for Molecular Conformer Generation
 
+Here, we produce a fork with pre- and post-processing wrappers to use the pre-trained torsional diffusion model by Jing et al. on the CASF dataset, a subset of the PDBBind dataset. The contents and contributions include: 
+
+1. `td.yml` for running the model examples on PACE clusters
+2. `./pre-processing/smiles_csv.py` for generating pre-trained conformers for a specified list of smiles strings from the CASF dataset
+3. `./post-processing/compare_*/analyze_dist.py` for generating principal component analysis (PCA) results for comparing GEOM-DRUGS and CASF conformers 
+
+
 Implementation of [Torsional Diffusion for Molecular Conformer Generation](https://arxiv.org/abs/2206.01729) by B Jing,* G Corso,* J Chang, R Barzilay and T Jaakkola.
 
 Torsional diffusion is the state-of-the-art method for molecular conformer generation on the GEOM-DRUGS dataset and the first machine learning method to consistently outperform the established commercial software OMEGA. Torsional diffusion uses a novel diffusion framework that operates on the space of torsion angles via a diffusion process on the hypertorus and an extrinsic-to-intrinsic score model. It also provides exact likelihoods, which are used build the first generalizable Boltzmann generator.
